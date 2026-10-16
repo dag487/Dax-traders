@@ -6,6 +6,7 @@ import { inter, FONT_CLASS_MAP } from '@/lib/fonts';
 import { TemplateLayout } from '@/components/custom/template-layout';
 import { LogoSrcProvider } from '@/components/custom/logo-src-provider';
 import { TemplateI18nProvider } from '../lib/i18n/provider';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/app/globals.css';
 import './globals.css';
 import '@deriv-com/smartcharts-champion/dist/smartcharts.css';
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <LogoSrcProvider logoSrc={logoSrc}>{children}</LogoSrcProvider>
           </TemplateLayout>
         </TemplateI18nProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
