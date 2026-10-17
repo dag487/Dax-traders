@@ -1,63 +1,56 @@
-# Rise/Fall Trading App
+# Dax-traders — Clean Vercel starter + Deriv backend connector
 
-A self-hosted Rise/Fall trading app built on the Deriv WebSocket API. Supports CALL (Rise) and PUT (Fall) contract types with an interactive SmartCharts chart, real-time tick streaming, and open/closed position management.
+This branch provides a minimal, safe reset of the app and a simple server-side
+Deriv connector. It purposefully avoids committing secrets and aims to be
+re-deployable on Vercel with minimal setup.
 
-## Prerequisites
+What I changed
+- Created a small server-side Deriv helper: `lib/deriv-client.ts`
+- Added a generic API route: `POST /api/deriv` (app/api/deriv/route.ts) that
+  forwards a single JSON request to Deriv and returns the first response.
+- Replaced the repository production env file content with an example (no
+  real tokens) and added `.env.example`.
 
-- Node.js 18.18 or later
+Important: no secrets committed
+- Do NOT commit DERIV_API_TOKEN or any real tokens.
+- Add DERIV_API_TOKEN (server-side) and NEXT_PUBLIC_DERIV_APP_ID (if needed)
+  to Vercel Environment Variables before deploying.
 
-## Step 1: Register Your App ID
+How to use the backend connector
+1. Set environment variables in Vercel or locally (.env.local):
+   - DERIV_API_TOKEN=your_authorize_token_here
+   - NEXT_PUBLIC_DERIV_APP_ID=your_app_id_if_you_have_one
 
-1. Log in to your Deriv account and go to the [API Token page](https://app.deriv.com/account/api-token) to create a token with the required scopes.
-2. Navigate to [App Registration](https://developers.deriv.com/dashboard/) and register a new application.
-3. Set the **Redirect URI** to the URL where you will host this app (e.g. `http://localhost:3000` for local development).
-4. Copy the **App ID** shown after registration — you will need it in the next step.
+2. Call the API route from the server or client (client should call your
+   backend endpoint; do not embed DERIV_API_TOKEN in client code):
 
-## Step 2: Configure `.env.production`
+   POST /api/deriv
+   Content-Type: application/json
 
-Copy `.env.example` to `.env.production` and fill in your values:
+   Body example (authorize):
+   {
+     "request": { "authorize": "YOUR_DERIV_TOKEN" }
+   }
 
-```bash
-cp .env.example .env.production
-```
+   Body example (get balance):
+   {
+     "request": { "get_account_status": 1 }
+   }
 
-Edit `.env.production`:
+   Body example (ticks):
+   {
+     "request": { "ticks": "R_100" }
+   }
 
-```env
-NEXT_PUBLIC_DERIV_APP_ID=your_app_id_here
-NEXT_PUBLIC_DERIV_REDIRECT_URI=https://your-registered-redirect-uri.com
-NEXT_PUBLIC_DERIV_APP_NAME=your_app_name_here
-NEXT_PUBLIC_DERIV_SHOW_APP_NAME=true
-NEXT_PUBLIC_DERIV_REFERRAL_LINK=your_referral_link_here
-NEXT_PUBLIC_DERIV_OAUTH_SCOPES=trade,account_manage
-NEXT_PUBLIC_DERIV_ENV=production
-```
+Notes and limitations
+- This connector is intentionally simple: it opens a short-lived WebSocket,
+  sends one request, returns the first message, and closes the connection.
+- For real-time streaming (ticks, live subscriptions) you should implement a
+  persistent WS proxy or handle subscriptions client-side.
+- The route runs under the `nodejs` runtime to allow the `ws` package.
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_DERIV_APP_ID` | Your Deriv app ID from the App Registration dashboard |
-| `NEXT_PUBLIC_DERIV_REDIRECT_URI` | OAuth redirect URI — must exactly match the URI registered in your Deriv app |
-| `NEXT_PUBLIC_DERIV_APP_NAME` | In-app display name (header, tab title, favicon). Set in App Builder Customise. OAuth/consent registration name is configured separately and is not this env var. |
-| `NEXT_PUBLIC_DERIV_SHOW_APP_NAME` | `true` (default) shows the name next to the logo on desktop; `false` hides it (logo only). Tab title / favicon still use `NEXT_PUBLIC_DERIV_APP_NAME`. |
-| `NEXT_PUBLIC_DERIV_REFERRAL_LINK` | Affiliate referral link shown to unauthenticated users (optional) |
-| `NEXT_PUBLIC_DERIV_OAUTH_SCOPES` | Comma-separated OAuth scopes (e.g. `trade,account_manage`) |
-| `NEXT_PUBLIC_DERIV_ENV` | `production` to connect to the live Deriv endpoint; `preview` for staging |
+If you want, I can next:
+- Implement helper client-side hooks (useDeriv) that call `/api/deriv` safely
+- Add a small dashboard page that shows balance and a tick sample
+- Harden error handling and add request ID correlation for debug logging
 
-For local development, copy `.env.production` to `.env.local` — Next.js will load `.env.local` automatically and it takes precedence over `.env.production`.
-
-## Step 3: Local Development
-
-```bash
-npm install
-npm run dev
-```
-
-The app is available at `http://localhost:3000`.
-
-## Step 4: Build for Production
-
-```bash
-npm run build
-```
-
-This produces a fully static export in the `/out` directory. Serve the contents of `/out` from any web server or static file host.
