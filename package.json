@@ -62,7 +62,9 @@
     "uuid": "11.1.1",
     "vaul": "^1.1.1",
     "@deriv-com/smartcharts-champion": "1.10.8",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "jsonwebtoken": "^9.0.0",
+    "@supabase/supabase-js": "^2.30.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
